@@ -1,0 +1,21 @@
+name: Delete branch depois do merge (Segura)
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  delete-branch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete merged branch
+        uses: jessfraz/branch-cleanup-action@master
+        with:
+          branches: "!main, !dev, *"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
