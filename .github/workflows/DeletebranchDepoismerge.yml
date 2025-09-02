@@ -1,5 +1,8 @@
 name: Delete branch depois do merge (Segura)
 
+permissions:
+  contents: write 
+
 on:
   pull_request:
     types: [closed]
