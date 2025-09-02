@@ -5,20 +5,20 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: write
+  contents: write  # Permissão necessária para criar tags
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-    - name: Checar Branch de Origem
-      run: |
-        echo "Branch origem: ${{ github.head_ref }}"
-        if [[ "${{ github.head_ref }}" != "dev" && "${{ github.head_ref }}" != hotfix_* ]]; then
-          echo "❌ Apenas PRs da branch 'dev' ou 'hotfix_*' podem ser mergeados na 'main'."
-          exit 1
-        fi
-        echo "✅ Branch de origem válida."
+      - name: Checar Branch de Origem
+        run: |
+          echo "Branch origem: ${{ github.head_ref }}"
+          if [[ "${{ github.head_ref }}" != "dev" && "${{ github.head_ref }}" != hotfix_* ]]; then
+            echo "❌ Apenas PRs da branch 'dev' ou 'hotfix_*' podem ser mergeados na 'main'."
+            exit 1
+          fi
+          echo "✅ Branch de origem válida."
 
   build:
     runs-on: ubuntu-latest
@@ -27,29 +27,40 @@ jobs:
       matrix:
         node-version: [18.x, 20.x, 22.x]
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm install
-    - run: npm run build --if-present
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necessário para obter todas as tags
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm install
+      - run: npm run build --if-present
 
   versioning:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # necessário para obter todas as tags
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necessário para obter todas as tags
 
-    - name: Gerar Tag SemVer
-      run: |
-        LATEST_TAG=$(git describe --tags --abbrev=0 || echo "0.0.0")
-        IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+      - name: Gerar Tag SemVer
+        run: |
+          # Pega a última tag, ou usa 0.0.0 se não existir
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+          echo "Última tag: $LATEST_TAG"
 
-        if [[ "${{ github.head_ref }}" == hotfix_* ]]; then
-          PATCH=$((PATCH+1))
-        else
-          MINOR=$((MINOR+1))
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+
+          BRANCH="${{ github.head_ref }}"
+
+          if [[ "$BRANCH" == hotfix_* ]]; then
+            PATCH=$((PATCH+1))
+            echo "Hotfix detectado. Incrementando PATCH"
+          else
+            MINOR=$((MINOR+1))
+            PATCH=0
+            echo "Branch dev detectada. Incrementando MINOR"
+          fi
