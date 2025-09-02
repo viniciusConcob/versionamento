@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [ "dev" ]
 
+permissions:
+  contents: write 
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -41,6 +44,6 @@ jobs:
       if: github.event.pull_request.merged == true
       run: |
         BRANCH=${{ github.head_ref }}
-        echo "Excluindo branch $BRANCH..."
+        echo "Deletando branch $BRANCH..."
         curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$BRANCH"
