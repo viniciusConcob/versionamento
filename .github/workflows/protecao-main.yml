@@ -65,4 +65,12 @@ jobs:
             PATCH=0
             echo "Branch dev detectada. Incrementando MINOR"
           fi
+          NEW_TAG="v$MAJOR.$MINOR.$PATCH"
+          echo "Nova tag: $NEW_TAG"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
+          git push origin HEAD
 
