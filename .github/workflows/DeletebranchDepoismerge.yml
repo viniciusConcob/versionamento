@@ -1,0 +1,38 @@
+name: Delete branch depois do merge (Segura)
+
+on:
+  pull_request:
+    types: [closed]
+  
+permissions:
+  contents: write 
+
+jobs:
+  delete-branch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check branch protection
+        id: check
+        uses: octokit/request-action@v5
+        with:
+          route: GET /repos/${{ github.repository }}/branches/${{ github.event.pull_request.head.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete branch if not protected
+        run: |
+          BRANCH_TO_DELETE="${{ github.event.pull_request.head.ref }}"
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+
+          # Verifica se a branch é main, dev ou protegida
+          IS_PROTECTED="${{ steps.check.outputs.data_protected }}"
+          
+          if [[ "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "dev" || "$IS_PROTECTED" == "true" ]]; then
+            echo "Branch $BRANCH_TO_DELETE não será deletada (protegida ou base crítica)."
+            exit 0
+          fi
+
+          echo "Deletando branch $BRANCH_TO_DELETE..."
+          git push origin --delete "$BRANCH_TO_DELETE"

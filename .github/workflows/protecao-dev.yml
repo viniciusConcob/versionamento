@@ -3,9 +3,6 @@ name: Proteção Dev CI
 on:
   pull_request:
     branches: [ "dev" ]
-  pull_request_target:
-    types: [closed]
-
 
 permissions:
   contents: write 
@@ -13,8 +10,6 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-
-    if: github.event.action != 'closed'
     steps:
     - name: Checar Branch de Origem
       run: |
@@ -40,15 +35,3 @@ jobs:
         cache: 'npm'
     - run: npm install
     - run: npm run build --if-present
-
-  delete_branch:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-    - name: Excluir Branch de Origem Após Merge
-      if: github.event.pull_request.merged == true
-      run: |
-        BRANCH=${{ github.head_ref }}
-        echo "Deletando branch $BRANCH..."
-        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$BRANCH"
