@@ -1,11 +1,11 @@
 name: Delete branch depois do merge (Segura)
 
+permissions:
+  contents: write 
+
 on:
   pull_request:
     types: [closed]
-  
-permissions:
-  contents: write 
 
 jobs:
   delete-branch:
@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Check branch protection
         id: check
-        uses: octokit/request-action@v5
+        uses: octokit/request-action@v2
         with:
           route: GET /repos/${{ github.repository }}/branches/${{ github.event.pull_request.head.ref }}
         env:
@@ -26,7 +26,6 @@ jobs:
           BRANCH_TO_DELETE="${{ github.event.pull_request.head.ref }}"
           BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
 
-          # Verifica se a branch é main, dev ou protegida
           IS_PROTECTED="${{ steps.check.outputs.data_protected }}"
           
           if [[ "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "dev" || "$IS_PROTECTED" == "true" ]]; then
