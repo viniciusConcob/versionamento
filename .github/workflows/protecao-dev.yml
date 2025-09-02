@@ -3,9 +3,6 @@ name: Proteção Dev CI
 on:
   pull_request:
     branches: [ "dev" ]
-  pull_request_target:
-    types: [closed]
-
 
 permissions:
   contents: write 
@@ -13,8 +10,6 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-
-    if: github.event.action != 'closed'
     steps:
     - name: Checar Branch de Origem
       run: |
