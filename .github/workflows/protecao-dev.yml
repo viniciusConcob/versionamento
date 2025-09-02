@@ -1,0 +1,47 @@
+name: Proteção Dev CI
+
+on:
+  pull_request:
+    branches: [ "dev" ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checar Branch de Origem
+      run: |
+        echo "Branch origem: ${{ github.head_ref }}"
+        if [[ "${{ github.head_ref }}" != feature_* && "${{ github.head_ref }}" != bugfix_* && "${{ github.head_ref }}" != hotfix_* ]]; then
+          echo "❌ Apenas PRs de 'feature_*', 'bugfix_*' ou 'hotfix_*' podem ser mergeados na 'dev'."
+          exit 1
+        fi
+        echo "✅ Branch de origem válida."
+
+  build:
+    runs-on: ubuntu-latest
+    needs: validate
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm install
+    - run: npm run build --if-present
+    - run: npm test
+
+  delete_branch:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Excluir Branch de Origem Após Merge
+      if: github.event.pull_request.merged == true
+      run: |
+        BRANCH=${{ github.head_ref }}
+        echo "Excluindo branch $BRANCH..."
+        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$BRANCH"

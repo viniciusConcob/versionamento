@@ -1,0 +1,59 @@
+name: Proteção Main CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checar Branch de Origem
+      run: |
+        echo "Branch origem: ${{ github.head_ref }}"
+        if [[ "${{ github.head_ref }}" != "dev" && "${{ github.head_ref }}" != hotfix_* ]]; then
+          echo "❌ Apenas PRs da branch 'dev' ou 'hotfix_*' podem ser mergeados na 'main'."
+          exit 1
+        fi
+        echo "✅ Branch de origem válida."
+
+  build:
+    runs-on: ubuntu-latest
+    needs: validate
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm install
+    - run: npm run build --if-present
+    - run: npm test
+
+  versioning:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Gerar Tag semVer
+      run: |
+        LATEST_TAG=$(git describe --tags --abbrev=0 || echo "0.0.0")
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
+        
+        if [[ "${{ github.head_ref }}" == hotfix_* ]]; then
+          PATCH=$((PATCH+1))
+        else
+          MINOR=$((MINOR+1))
+          PATCH=0
+        fi
+
+        NEW_TAG="$MAJOR.$MINOR.$PATCH"
+        echo "Gerando tag $NEW_TAG"
+        git tag $NEW_TAG
+        git push origin $NEW_TAG
