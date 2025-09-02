@@ -52,6 +52,7 @@ jobs:
       - name: Gerar Tag SemVer
         run: |
           # Pega a última tag, ou usa 0.0.0 se não existir
+          git fetch --tags
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           echo "Última tag: $LATEST_TAG"
 
