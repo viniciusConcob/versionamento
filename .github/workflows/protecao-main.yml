@@ -29,7 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # necessário para obter todas as tags
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -45,7 +46,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # necessário para obter todas as tags
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Gerar Tag SemVer
         run: |
