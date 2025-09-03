@@ -19,7 +19,7 @@ function App() {
       <h1>Vite + React</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 2)}>
-          count is {count}
+          count is {count} sempre de 2 em 2 erro
         </button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
