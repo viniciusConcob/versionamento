@@ -49,19 +49,7 @@ jobs:
         fetch-depth: 0
         fetch-tags: true
 
-    - name: Checar se workflow foi alterado
-      id: check_workflow
-      run: |
-        # Verifica se algum arquivo de workflow foi alterado
-        if git diff --name-only HEAD^ HEAD | grep -q '^.github/workflows/'; then
-          echo "workflow_changed=true" >> $GITHUB_OUTPUT
-        else
-          echo "workflow_changed=false" >> $GITHUB_OUTPUT
-        fi
-
-
     - name: Gerar Tag SemVer
-      if: steps.check_workflow.outputs.workflow_changed == 'false'
       run: |
         git fetch --tags
         LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1)
